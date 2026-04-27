@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>診断結果</title>
+  <!-- 和風フォント -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #fff url('https://www.transparenttextures.com/patterns/gray-floral.png');
+      font-family: 'Noto Serif JP', serif;
+      color: #111;
+      text-align: center;
+      margin: 0;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background-color: #B22222;
+      padding: 40px 20px 20px;
+      position: relative;
+    }
+
+    .logo {
+      background: none;
+      color: #fff;
+      padding: 0;
+      border-radius: 0;
+      writing-mode: horizontal-tb;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      font-size: 0.9em;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .version-label {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+
+    header h1 {
+      margin: 20px 0 10px;
+      font-size: 2.5em;
+      color: #fff;
+      text-shadow: 2px 2px #000;
+    }
+
+    .result {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .section {
+      background: #fff4e6;
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .section h3 {
+      margin-top: 0;
+      font-size: 1.8em;
+      color: #B22222;
+    }
+
+    .section img {
+      width: 200px;
+      height: auto;
+      border-radius: 10px;
+      margin: 10px 0;
+      object-fit: cover;
+    }
+
+    ul {
+      padding: 0;
+      list-style: none;
+      margin: 0 auto;
+    }
+
+    li {
+      margin-bottom: 30px;
+    }
+
+    .like-button {
+      display: inline-block;
+      background: #FFD700;
+      border: none;
+      border-radius: 30px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+      margin-top: 10px;
+      font-family: 'Noto Serif JP', serif;
+    }
+
+    .like-button:hover {
+      background: #FFDA44;
+    }
+
+    .like-button.liked {
+      background: #B22222;
+      color: #fff;
+      cursor: default;
+    }
+
+    footer {
+      margin: 50px 0 20px;
+      font-size: 0.9em;
+      color: #555;
+    }
+
+    footer a {
+      color: #B22222;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.8em;
+      }
+
+      .result {
+        margin: 20px 10px;
+        padding: 10px;
+      }
+
+      .section h3 {
+        font-size: 1.3em;
+      }
+
+      .like-button {
+        padding: 8px 15px;
+        font-size: 0.9em;
+      }
+
+      .section img {
+        width: 100%;
+        max-width: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">diagnosis</div>
+    <div class="version-label">version 1</div>
+    <h1>🍥 診断結果 🍥</h1>
+  </header>
+
+  <div class="result">
+    <div class="section">
+      <h3>🍜 おすすめの宅麺 🍜</h3>
+      {% if takumen_products %}
+        <ul>
+          {% for product in takumen_products %}
+            <li>
+              <strong>{{ product["商品名"] }}</strong><br>
+              <img src="{{ product['写真リンク'] }}" alt="{{ product['商品名'] }}"><br>
+              <a href="{{ product['詳細リンク'] }}" target="_blank">▶ 詳細を見る</a><br>
+              価格: {{ product["価格(税抜き、税込み)"] }}<br>
+              <p>{{ product["簡単な詳細"] }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>宅麺のデータが見つかりませんでした。</p>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h3>🍜 おすすめのラーメン店 🍜</h3>
+      {% if shops %}
+        <ul>
+          {% for shop in shops %}
+            <li>
+              <strong>{{ shop["店名"] }}</strong><br>
+              {% if shop["写真1"] %}
+                <img src="{{ shop['写真2'] }}" alt="写真">
+              {% endif %}
+              <br>
+              住所: {{ shop["住所"] }}<br>
+              <a href="{{ shop['詳細リンク'] }}" target="_blank">▶ 詳細を見る</a><br>
+              距離: {{ shop["距離_表示"] }}<br>
+              <button class="like-button" data-shop-name="{{ shop['店名'] }}">
+                行く！🏃‍♂️ <span class="like-count">{{ shop['いいね'] }}</span>
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>近くのラーメン店が見つかりませんでした。</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 ラーメン診断 | <a href="/">診断をもう一度する</a></p>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.like-button').forEach(button => {
+      const shopName = button.getAttribute('data-shop-name');
+      if (localStorage.getItem(`liked_${shopName}`)) {
+        button.classList.add('liked');
+        button.disabled = true;
+      }
+
+      button.addEventListener('click', () => {
+        if (button.disabled) return;
+
+        fetch('/like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shop_name: shopName })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.count !== undefined) {
+            button.querySelector('.like-count').textContent = data.count;
+            button.classList.add('liked');
+            button.disabled = true;
+            localStorage.setItem(`liked_${shopName}`, 'true');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

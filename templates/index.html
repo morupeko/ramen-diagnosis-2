@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ラーメン診断</title>
+  <!-- 和風フォント -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #fff url('https://www.transparenttextures.com/patterns/gray-floral.png');
+      color: #111;
+      font-family: 'Noto Serif JP', serif;
+      text-align: center;
+      margin: 0;
+      padding: 0 0 60px; /* 下の固定バー分の余白 */
+    }
+
+    header {
+      background-color: #B22222; /* 醤油の色に近い暖色 */
+      padding: 40px 20px 20px;
+      position: relative;
+    }
+
+    .logo {
+      background: none;
+      color: #fff;
+      padding: 0;
+      font-size: 0.9em;
+      font-weight: bold;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      white-space: nowrap;
+    }
+
+    .version-label {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.9em;
+      white-space: nowrap;
+    }
+
+    header h1 {
+      margin: 20px 0 10px;
+      font-size: 2.5em;
+      color: #fff;
+      text-shadow: 2px 2px #000;
+    }
+
+    header h2 {
+      margin: 0;
+      font-size: 1.2em;
+      color: #fff;
+    }
+
+    form {
+      margin: 50px 20px 80px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .question-container {
+      margin: 40px 0;
+      padding-bottom: 40px;
+      border-bottom: 2px solid #eee;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .question-text {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .scale-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap; /* 改行防止 */
+      white-space: nowrap;
+      overflow-x: auto; /* スマホで横スクロールできる */
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
+    }
+
+    .scale-label {
+      font-weight: bold;
+      font-size: 0.85em;
+      white-space: nowrap;
+      min-width: 40px;
+      user-select: none;
+    }
+
+    .circle-group {
+      display: flex;
+      align-items: center;
+      margin: 0 3px;
+      flex-shrink: 0; /* 縮まらない */
+    }
+
+    .circle {
+      display: inline-block;
+      border-radius: 50%;
+      border: 2px solid;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .small { width: 22px; height: 22px; }
+    .medium { width: 26px; height: 26px; }
+    .large { width: 30px; height: 30px; }
+
+    .agree .circle { border-color: #FFD700; }
+    .neutral .circle { border-color: #555; }
+    .disagree .circle { border-color: #00FF7F; }
+
+    input[type="radio"] {
+      display: none;
+    }
+
+    .agree input[type="radio"]:checked + .circle {
+      background: #FFD700;
+    }
+    .neutral input[type="radio"]:checked + .circle {
+      background: #555;
+    }
+    .disagree input[type="radio"]:checked + .circle {
+      background: #00FF7F;
+    }
+
+    .circle .checkmark {
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      user-select: none;
+    }
+
+    input[type="radio"]:checked + .circle .checkmark {
+      opacity: 1;
+    }
+
+    input[type="submit"] {
+      background: #B22222;
+      color: #fff;
+      border: none;
+      padding: 16px 36px;
+      border-radius: 8px;
+      font-size: 1.4em;
+      cursor: pointer;
+      margin-top: 30px;
+      font-family: 'Noto Serif JP', serif;
+      white-space: nowrap;
+      user-select: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      transition: background-color 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background: #8B0000;
+    }
+
+    footer {
+      margin: 50px 0 20px;
+      font-size: 0.8em;
+      color: #555;
+      user-select: none;
+    }
+
+    /* 進捗バー用 */
+    #progressWrapper {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 900px;
+      background: #eee;
+      height: 14px;
+      border-radius: 10px;
+      box-shadow: inset 0 0 5px #ccc;
+      z-index: 10000;
+    }
+
+    #progressBar {
+      height: 100%;
+      background-color: #FFD700;
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    #progressText {
+      position: absolute;
+      top: -25px;
+      left: 5px;
+      color: #B22222;
+      font-weight: bold;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 30px 15px 15px;
+      }
+      header h1 {
+        font-size: 1.8em;
+      }
+      header h2 {
+        font-size: 1em;
+      }
+      form {
+        margin: 30px 15px 80px;
+        padding: 0 10px;
+      }
+      .question-text {
+        font-size: 1.2em;
+      }
+      .scale-container {
+        gap: 6px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .scale-label {
+        font-size: 0.8em;
+        min-width: 35px;
+      }
+      .circle.small { width: 18px; height: 18px; }
+      .circle.medium { width: 22px; height: 22px; }
+      .circle.large { width: 26px; height: 26px; }
+      input[type="submit"] {
+        font-size: 1.2em;
+        padding: 14px 30px;
+      }
+      #progressText {
+        font-size: 12px;
+        top: -20px;
+      }
+      .logo, .version-label {
+        font-size: 0.8em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">diagnosis</div>
+    <div class="version-label">version 1</div>
+    <h1>🍥 ラーメン診断 🍥</h1>
+    <h2>今のあなたにぴったりの一杯を🍜</h2>
+  </header>
+
+  <form id="quizForm" action="/result" method="POST" novalidate>
+    {% for question in questions %}
+      <div class="question-container">
+        <div class="question-text">{{ question }}</div>
+        <div class="scale-container">
+          {% if loop.index0 == 0 %}
+            <span class="scale-label">こってり</span>
+          {% elif loop.index0 == 1 %}
+            <span class="scale-label">太麺</span>
+          {% elif loop.index0 == 2 %}
+            <span class="scale-label">硬め</span>
+          {% else %}
+            <span class="scale-label">はい</span>
+          {% endif %}
+
+          <label class="circle-group agree">
+            <input type="radio" name="q{{ loop.index0 }}" value="左" required>
+            <span class="circle large"><span class="checkmark">✔</span></span>
+          </label>
+
+          <label class="circle-group agree">
+            <input type="radio" name="q{{ loop.index0 }}" value="左">
+            <span class="circle medium"><span class="checkmark">✔</span></span>
+          </label>
+
+          <label class="circle-group neutral">
+            <input type="radio" name="q{{ loop.index0 }}" value="どっちでもない">
+            <span class="circle small"><span class="checkmark">✔</span></span>
+          </label>
+
+          <label class="circle-group disagree">
+            <input type="radio" name="q{{ loop.index0 }}" value="右">
+            <span class="circle medium"><span class="checkmark">✔</span></span>
+          </label>
+
+          <label class="circle-group disagree">
+            <input type="radio" name="q{{ loop.index0 }}" value="右">
+            <span class="circle large"><span class="checkmark">✔</span></span>
+          </label>
+
+          {% if loop.index0 == 0 %}
+            <span class="scale-label">あっさり</span>
+          {% elif loop.index0 == 1 %}
+            <span class="scale-label">細麺</span>
+          {% elif loop.index0 == 2 %}
+            <span class="scale-label">やわらか</span>
+          {% else %}
+            <span class="scale-label">いいえ</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+
+    <input type="hidden" name="lat" id="lat" />
+    <input type="hidden" name="lng" id="lng" />
+
+    <input type="submit" value="診断スタート！" />
+  </form>
+
+  <!-- 進捗バー -->
+  <div id="progressWrapper">
+    <div id="progressBar"></div>
+    <div id="progressText">0/0</div>
+  </div>
+
+  <footer>© 2025 ramen-diagnosis 屋台</footer>
+
+  <script>
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById('lat').value = pos.coords.latitude;
+        document.getElementById('lng').value = pos.coords.longitude;
+      });
+    }
+
+    const form = document.getElementById('quizForm');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const totalQuestions = {{ questions|length }};
+    const questionNames = [];
+
+    for (let i = 0; i < totalQuestions; i++) {
+      questionNames.push(`q${i}`);
+    }
+
+    function updateProgress() {
+      let answeredCount = 0;
+      questionNames.forEach(name => {
+        const checked = form.querySelector(`input[name="${name}"]:checked`);
+        if (checked) answeredCount++;
+      });
+      const percent = (answeredCount / totalQuestions) * 100;
+      progressBar.style.width = percent + '%';
+      progressText.textContent = `${answeredCount}/${totalQuestions}`;
+    }
+
+    updateProgress();
+
+    form.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', updateProgress);
+    });
+
+    form.addEventListener('submit', function(e) {
+      for (let name of questionNames) {
+        if (!form.querySelector(`input[name="${name}"]:checked`)) {
+          e.preventDefault();
+          alert('まだ答えていない質問があります。すべて答えてから診断してください。');
+          return;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
